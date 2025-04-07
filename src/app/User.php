@@ -9,12 +9,17 @@ use App\Database;
 
 class User
 {
+    private $db;
+
+    public function __construct()
+    {
+        $database = new Database();
+        $this->db = $database->getConnection();
+    }
+
     public function create_user(): void
     {
         header('Content-Type: application/json');
-
-        $database = new Database();
-        $db = $database->getConnection();
 
         $email = $_POST['email'] ?? null;
         $full_name = $_POST['name'] ?? null;
@@ -27,7 +32,7 @@ class User
 
         $query = 'INSERT INTO users(email, full_name) values (:email, :full_name)';
 
-        $stmt = $db->prepare($query);
+        $stmt = $this->db->prepare($query);
 
         $stmt->execute([
             'email' => $email,
@@ -42,9 +47,6 @@ class User
     {
         header('Content-Type: application/json');
 
-        $database = new Database();
-        $db = $database->getConnection();
-        
         $email = $_GET['email'];
 
         if (!$email) {
@@ -55,7 +57,7 @@ class User
 
         $query = 'SELECT * FROM users WHERE email = :email';
 
-        $stmt = $db->prepare($query);
+        $stmt = $this->db->prepare($query);
 
         $stmt->execute(['email' => $email]);
 
@@ -68,15 +70,11 @@ class User
             http_response_code(404);
             echo json_encode(['error' => 'User not found']);
         }
-
     }
 
     public function update_user()
     {
         header('Content-Type: application/json');
-
-        $database = new Database();
-        $db = $database->getConnection();
 
         $original_email = $_GET['email'] ?? null;
         $email = $_POST['email'] ?? null;
@@ -89,7 +87,7 @@ class User
         }
 
         $selectQuery = 'SELECT id FROM users WHERE email = :email';
-        $selectStmt = $db->prepare($selectQuery);
+        $selectStmt = $this->db->prepare($selectQuery);
         $selectStmt->execute(['email' => $original_email]);
         $user = $selectStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -102,7 +100,7 @@ class User
         $userId = $user['id'];
 
         $query = 'UPDATE users SET email = :email, full_name = :full_name WHERE id = :id';
-        $stmt = $db->prepare($query);
+        $stmt = $this->db->prepare($query);
         $stmt->execute([
             'email' => $email,
             'full_name' => $full_name,
@@ -117,9 +115,6 @@ class User
     {
         header('Content-Type: application/json');
 
-        $database = new Database();
-        $db = $database->getConnection();
-
         $email = $_GET['email'] ?? null;
 
         if (!$email) {
@@ -129,7 +124,7 @@ class User
         }
 
         $query = 'DELETE FROM users WHERE email = :email';
-        $stmt = $db->prepare($query);
+        $stmt = $this->db->prepare($query);
         $stmt->execute(['email' => $email]);
 
         if ($stmt->rowCount() > 0) {
@@ -140,5 +135,4 @@ class User
             echo json_encode(['error' => 'User not found']);
         }
     }
-
 }
